@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LazyLock | 3-Agent AI Hardware & Schematic Studio</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+
+  <style>
+    :root {
+      --bg-base: #040908;
+      --panel-bg: rgba(10, 22, 19, 0.78);
+      --panel-border: rgba(16, 185, 129, 0.18);
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-base);
+      background-image:
+        radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(6, 182, 212, 0.10) 0px, transparent 50%),
+        radial-gradient(at 50% 100%, rgba(245, 158, 11, 0.07) 0px, transparent 50%);
+      background-attachment: fixed;
+      color: #f1f5f9;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .bg-pcb {
+      background-size: 32px 32px;
+      background-image:
+        linear-gradient(to right, rgba(16, 185, 129, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(16, 185, 129, 0.03) 1px, transparent 1px);
+    }
+
+    .panel {
+      background: var(--panel-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+    }
+
+    .muted { color: #94a3b8; }
+
+    .studio-input {
+      background: rgba(4, 12, 10, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      color: #f8fafc;
+      transition: all 0.2s ease;
+    }
+
+    .studio-input:focus {
+      outline: none;
+      border-color: #10b981;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #10b981 0%, #059669 50%, #0891b2 100%);
+      transition: all 0.25s ease;
+      box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
+
+    .preset-chip {
+      font-size: 0.72rem;
+      padding: 0.3rem 0.65rem;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.28);
+      color: #6ee7b7;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .preset-chip:hover {
+      background: rgba(16, 185, 129, 0.24);
+      color: #ffffff;
+    }
+
+    .markdown {
+      line-height: 1.75;
+      overflow-wrap: anywhere;
+      color: #cbd5e1;
+      font-size: 0.94rem;
+    }
+
+    .markdown h1, .markdown h2, .markdown h3 {
+      color: #ffffff;
+      font-weight: 700;
+      margin: 1.25em 0 0.5em;
+    }
+
+    .markdown h2 {
+      font-size: 1.2rem;
+      padding-bottom: 0.35rem;
+      border-bottom: 1px solid rgba(16, 185, 129, 0.18);
+      color: #ecfdf5;
+    }
+
+    .markdown h3 { font-size: 1.05rem; color: #34d399; }
+    .markdown ul, .markdown ol { padding-left: 1.5rem; margin: 0.65em 0; }
+    .markdown ul { list-style-type: disc; }
+    .markdown ol { list-style-type: decimal; }
+    .markdown li { margin: 0.3em 0; }
+    .markdown pre {
+      background: #020605;
+      border: 1px solid rgba(16, 185, 129, 0.22);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.84rem;
+      color: #a7f3d0;
+      margin: 1rem 0;
+    }
+
+    .field {
+      background: linear-gradient(180deg, rgba(11, 25, 21, 0.9) 0%, rgba(5, 13, 11, 0.95) 100%);
+      border: 1px solid rgba(16, 185, 129, 0.18);
+      border-radius: 0.875rem;
+      padding: 1.1rem 1.25rem;
+    }
+
+    .field-label {
+      display: inline-flex;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #34d399;
+      font-weight: 700;
+      margin-bottom: 0.45rem;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      padding: 0.2rem 0.65rem;
+      border-radius: 9999px;
+    }
+
+    .field-value {
+      white-space: pre-wrap;
+      color: #f1f5f9;
+      line-height: 1.65;
+      font-size: 0.93rem;
+    }
+
+    .tab-btn {
+      border: 1px solid transparent;
+      color: #94a3b8;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+      border-color: rgba(16, 185, 129, 0.45);
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.22), rgba(6, 182, 212, 0.1));
+      color: #ffffff;
+    }
+
+    .action-btn {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(16, 185, 129, 0.28);
+      color: #d1fae5;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.18);
+      color: #ffffff;
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+
+<body class="min-h-screen bg-pcb selection:bg-emerald-500/30 selection:text-emerald-200">
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-7">
+
+    <!-- HEADER -->
+    <header class="panel rounded-2xl px-6 py-4 flex flex-wrap items-center justify-between gap-4 mb-7">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-slate-950 border border-emerald-500/30 text-emerald-400 font-extrabold text-2xl flex items-center justify-center shadow-lg">
+          🦥
+        </div>
+        <div>
+          <div class="flex flex-wrap items-center gap-2.5">
+            <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-white">
+              LazyLock <span class="text-emerald-400 font-mono text-sm">v2.0</span>
+            </h1>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">
+              Slow &amp; Steady · 3-Agent Hardware + Telegram + Voice Studio
+            </span>
+          </div>
+          <p class="muted text-xs sm:text-sm mt-0.5">
+            Too lazy to read 80-page datasheets? Describe any gadget to auto-generate schematics, voltage safety audits, `.ino` firmware &amp; hands-free voice wiring guides.
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 bg-slate-950/80 border border-slate-800 rounded-full px-4 py-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span id="status" class="text-xs sm:text-sm font-medium text-slate-300">Ready</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-[380px_minmax(0,1fr)] gap-6 lg:gap-8 items-start">
+
+      <!-- LEFT CONTROL PANEL -->
+      <aside class="panel rounded-2xl p-6 lg:sticky lg:top-6">
+        <div class="flex items-center justify-between mb-1">
+          <h2 class="text-lg font-bold text-white">Sloth Hardware Prompt</h2>
+          <span class="text-[11px] font-mono uppercase text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+            Zero Datasheets
+          </span>
+        </div>
+        <p class="muted text-xs leading-relaxed mb-4">
+          Pick a microcontroller and describe what you want to build—or click a 1-click lazy preset below.
+        </p>
+
+        <form id="hardwareForm" class="space-y-4">
+          <div>
+            <label for="boardType" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+              🎛️ Target Microcontroller Board
+            </label>
+            <select id="boardType" class="studio-input w-full rounded-xl p-3 text-sm font-medium">
+              <option value="ESP32 DevKit V1 (Wi-Fi + BLE)">ESP32 DevKit V1 (Wi-Fi + BLE)</option>
+              <option value="Arduino Uno R3 (ATmega328P)">Arduino Uno R3 (5V Logic)</option>
+              <option value="M5Stack Core / Tab5 IoT">M5Stack Core / IoT Kit</option>
+              <option value="Raspberry Pi Pico W (RP2040)">Raspberry Pi Pico W</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="projectIdea" class="block text-xs font-semibold uppercase tracking-wider text-emerald-300 mb-1.5">
+              ⚡ What Are You Too Lazy to Wire Manually?
+            </label>
+            <textarea
+              id="projectIdea"
+              required
+              rows="4"
+              class="studio-input w-full rounded-xl p-3 text-sm leading-relaxed"
+              placeholder="e.g., RFID + Servo smart dorm door lock that unlocks via Telegram and buzzes on wrong card..."
+            >Smart dorm door lock using an RC522 RFID reader, SG90 servo motor, status LED, and active buzzer so I can unlock my door from my bed without getting up.</textarea>
+
+            <div class="mt-2.5">
+              <span class="block text-[11px] font-mono uppercase text-slate-400 mb-1.5">1-Click Lazy Presets:</span>
+              <div class="flex flex-wrap gap-1.5">
+                <button type="button" class="preset-chip" data-idea="Smart dorm door lock using RC522 RFID reader, SG90 servo motor, and buzzer so I never have to get out of bed to unlock the door.">🔐 Lazy Door Lock</button>
+                <button type="button" class="preset-chip" data-idea="Automated houseplant soil moisture sensor with capacitive probe, 5V relay water pump, and status LED so my plants water themselves.">🌱 Auto Plant Waterer</button>
+                <button type="button" class="preset-chip" data-idea="HC-SR04 ultrasonic desk presence detector with WS2812B NeoPixel strip and relay that turns off my lights when I fall asleep on the couch.">🛋️ Couch Sleep Sensor</button>
+                <button type="button" class="preset-chip" data-idea="SSD1306 I2C OLED display + DHT22 temperature/humidity monitor with high-temp fan relay trigger.">🌡️ OLED Room Monitor</button>
+              </div>
+            </div>
+          </div>
+
+          <button
+            id="submitBtn"
+            type="submit"
+            class="btn-primary w-full rounded-xl text-white font-bold py-3.5 px-4 text-sm tracking-wide disabled:opacity-50"
+          >
+            Auto-Design Circuit &amp; Firmware ⚡
+          </button>
+        </form>
+
+        <!-- HANDS-FREE VOICE WIRING COACH BAR -->
+        <div class="mt-6 pt-5 border-t border-slate-800/80">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-cyan-300">🎙️ Hands-Free Voice Wiring Coach</span>
+            <span id="voiceBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">ElevenLabs + WebTTS</span>
+          </div>
+          <p id="voiceScriptPreview" class="text-xs muted italic mb-3">
+            Generate a circuit to listen to step-by-step breadboard wiring instructions while keeping your hands on your jumper wires.
+          </p>
+          <audio id="elevenAudioPlayer" controls class="w-full h-9 hidden mb-2"></audio>
+          <div class="flex gap-2">
+            <button id="speakBtn" type="button" class="action-btn flex-1 rounded-xl py-2 px-3 text-xs">
+              🔊 Speak Wiring Guide Out Loud
+            </button>
+            <button id="stopSpeakBtn" type="button" class="action-btn rounded-xl py-2 px-3 text-xs">
+              ⏹️
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- RIGHT MAIN WORKSPACE -->
+      <main class="min-w-0 space-y-5">
+
+        <!-- TABS -->
+        <div class="panel p-1.5 rounded-2xl inline-flex flex-wrap gap-1.5 w-full sm:w-auto" role="tablist">
+          <button class="tab-btn active rounded-xl px-4 py-2.5 text-xs sm:text-sm" data-tab="schematicTab" type="button">
+            01 · Pinout &amp; Visual Schematic
+          </button>
+          <button class="tab-btn rounded-xl px-4 py-2.5 text-xs sm:text-sm" data-tab="auditTab" type="button">
+            02 · Magic-Smoke Safety &amp; BOM Audit
+          </button>
+          <button class="tab-btn rounded-xl px-4 py-2.5 text-xs sm:text-sm" data-tab="firmwareTab" type="button">
+            03 · Ready-to-Flash Firmware (.ino)
+          </button>
+          <button class="tab-btn rounded-xl px-4 py-2.5 text-xs sm:text-sm" data-tab="logsTab" type="button">
+            04 · Live AI Observability Logs
+          </button>
+        </div>
+
+        <!-- TAB 1: SCHEMATIC & PINOUT -->
+        <section id="schematicTab" class="tab-panel panel rounded-2xl p-5 sm:p-7">
+          <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-5 border-b border-slate-800/80">
+            <div>
+              <span class="text-[11px] font-mono uppercase tracking-widest text-emerald-400 block">Agent 01 · Schematic &amp; Pinout Architect</span>
+              <h2 class="text-xl font-bold text-white">🔌 Interactive Block Schematic &amp; Pin-to-Pin Map</h2>
+            </div>
+            <button class="action-btn rounded-xl px-4 py-2 text-xs sm:text-sm" data-copy="schematicOutput" type="button">
+              Copy Pinout
+            </button>
+          </div>
+
+          <!-- Mermaid Visual Circuit Container -->
+          <div id="mermaidBox" class="hidden mb-5 rounded-xl bg-slate-950/90 border border-emerald-500/30 p-4 overflow-x-auto">
+            <div class="text-[11px] font-mono uppercase tracking-wider text-emerald-400 mb-2">📐 Auto-Rendered Hardware Block Topology</div>
+            <div id="mermaidRender" class="flex justify-center"></div>
+          </div>
+
+          <div id="schematicOutput" class="markdown rounded-xl bg-slate-950/75 border border-slate-800/90 p-5 sm:p-6 min-h-[320px]">
+            <p class="muted">Click <strong>Auto-Design Circuit &amp; Firmware ⚡</strong> to generate your Mermaid circuit topology and pin-to-pin wiring table.</p>
+          </div>
+        </section>
+
+        <!-- TAB 2: SAFETY & BOM AUDIT -->
+        <section id="auditTab" class="tab-panel panel rounded-2xl p-5 sm:p-7 hidden">
+          <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-5 border-b border-slate-800/80">
+            <div>
+              <span class="text-[11px] font-mono uppercase tracking-widest text-amber-400 block">Agent 02 · Electrical Safety &amp; BOM Auditor (JSON)</span>
+              <h2 class="text-xl font-bold text-white">🛡️ Voltage Rail Verification &amp; Bill of Materials</h2>
+            </div>
+            <button class="action-btn rounded-xl px-4 py-2 text-xs sm:text-sm" data-copy="auditOutput" type="button">
+              Copy BOM &amp; Audit
+            </button>
+          </div>
+
+          <div id="auditOutput" class="grid gap-4 min-h-[320px]">
+            <div class="rounded-xl bg-slate-950/75 border border-slate-800/90 p-5 flex items-center">
+              <p class="muted">3.3V/5V logic conflict checks, current draw estimates, and itemized component costs will appear here.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 3: FIRMWARE (.INO) -->
+        <section id="firmwareTab" class="tab-panel panel rounded-2xl p-5 sm:p-7 hidden">
+          <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-5 border-b border-slate-800/80">
+            <div>
+              <span class="text-[11px] font-mono uppercase tracking-widest text-cyan-400 block">Agent 03 · Embedded Firmware Engineer</span>
+              <h2 class="text-xl font-bold text-white">💻 Ready-to-Flash C++ / `.ino` Sketch</h2>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button id="downloadInoBtn" class="action-btn rounded-xl px-4 py-2 text-xs sm:text-sm" type="button">
+                ⬇️ Download sketch.ino
+              </button>
+              <button class="action-btn rounded-xl px-4 py-2 text-xs sm:text-sm" data-copy="firmwareOutput" type="button">
+                Copy Code
+              </button>
+            </div>
+          </div>
+
+          <div id="firmwareOutput" class="markdown rounded-xl bg-slate-950/75 border border-slate-800/90 p-5 sm:p-6 min-h-[320px]">
+            <p class="muted">Complete Arduino / ESP32 C++ code and the hands-free voice wiring script will appear here.</p>
+          </div>
+        </section>
+
+        <!-- TAB 4: LIVE AI OBSERVABILITY LOGS -->
+        <section id="logsTab" class="tab-panel panel rounded-2xl p-5 sm:p-7 hidden">
+          <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-800/80">
+            <div>
+              <span class="text-[11px] font-mono uppercase tracking-widest text-emerald-400 block">Real-Time Telemetry · LazyLockAI Logger</span>
+              <h2 class="text-xl font-bold text-white">📟 Structured AI Pipeline Observability</h2>
+            </div>
+            <button id="refreshLogsBtn" class="action-btn rounded-xl px-4 py-2 text-xs sm:text-sm" type="button">
+              🔄 Refresh Logs
+            </button>
+          </div>
+          <pre id="logsOutput" class="rounded-xl bg-black/90 border border-emerald-500/25 p-4 font-mono text-xs text-emerald-300 overflow-x-auto min-h-[320px] leading-relaxed">Waiting for pipeline execution...</pre>
+        </section>
+
+        <!-- STATUS BANNER -->
+        <div id="message" class="hidden rounded-xl border p-4 text-sm font-medium" role="status"></div>
+
+      </main>
+    </div>
+
+    <footer class="text-center muted text-xs mt-12 pt-6 border-t border-slate-800/40">
+      LazyLock (SlothLab) · Open-Source 3-Agent AI Hardware Engineer · Powered by Google Gemini / Gemma, ElevenLabs, Telegram &amp; FastAPI
+    </footer>
+  </div>
+
+  <script>
+    if (typeof window.mermaid !== "undefined") {
+      mermaid.initialize({ startOnLoad: false, theme: "dark" });
+    }
+
+    const form = document.getElementById("hardwareForm");
+    const submitBtn = document.getElementById("submitBtn");
+    const statusEl = document.getElementById("status");
+    const messageEl = document.getElementById("message");
+    const voiceScriptPreview = document.getElementById("voiceScriptPreview");
+    const elevenAudioPlayer = document.getElementById("elevenAudioPlayer");
+
+    let latestInoCode = "// Generate a hardware project first";
+    let latestVoiceScript = "Generate a hardware project first to hear your wiring guide.";
+
+    // Preset chips
+    document.querySelectorAll("[data-idea]").forEach(chip => {
+      chip.addEventListener("click", () => {
+        document.getElementById("projectIdea").value = chip.dataset.idea;
+      });
+    });
+
+    function setMessage(text, isError = false) {
+      messageEl.textContent = text;
+      messageEl.classList.remove("hidden", "border-red-700", "bg-red-950/40", "border-emerald-700", "bg-emerald-950/30");
+      messageEl.classList.add(isError ? "border-red-700" : "border-emerald-700", isError ? "bg-red-950/40" : "bg-emerald-950/30");
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function fallbackMarkdown(md) {
+      return "<pre>" + escapeHtml(md) + "</pre>";
+    }
+
+    function renderMarkdown(value) {
+      const source = typeof value === "string" ? value : JSON.stringify(value ?? "", null, 2);
+      try {
+        if (typeof window.marked !== "undefined") {
+          const raw = typeof window.marked.parse === "function" ? window.marked.parse(source) : window.marked(source);
+          return typeof window.DOMPurify !== "undefined" ? window.DOMPurify.sanitize(raw) : raw;
+        }
+      } catch (e) {}
+      return fallbackMarkdown(source);
+    }
+
+    async function renderMermaidIfPresent(markdownText) {
+      const box = document.getElementById("mermaidBox");
+      const container = document.getElementById("mermaidRender");
+      const match = markdownText.match(/```mermaid\s*([\s\S]*?)```/);
+      if (match && match[1] && typeof window.mermaid !== "undefined") {
+        try {
+          box.classList.remove("hidden");
+          const graphDef = match[1].trim();
+          const { svg } = await mermaid.render("circuitSvg_" + Date.now(), graphDef);
+          container.innerHTML = svg;
+          return;
+        } catch (err) {
+          console.warn("Mermaid diagram fallback:", err);
+        }
+      }
+      box.classList.add("hidden");
+    }
+
+    function addField(parent, label, value) {
+      const card = document.createElement("div");
+      card.className = "field";
+      const heading = document.createElement("div");
+      heading.className = "field-label";
+      heading.textContent = label;
+      const content = document.createElement("div");
+      content.className = "field-value";
+      content.textContent = typeof value === "string" ? value : JSON.stringify(value, null, 2);
+      card.append(heading, content);
+      parent.appendChild(card);
+    }
+
+    function showAudit(audit) {
+      const target = document.getElementById("auditOutput");
+      target.replaceChildren();
+      if (!audit || typeof audit !== "object") {
+        addField(target, "Status", "No audit returned.");
+        return;
+      }
+      addField(target, "✅ Safety Verdict", audit.safety_verdict || "Verified");
+      addField(target, "⚡ Voltage & Logic Level Warnings", audit.voltage_warnings || "None");
+      addField(target, "🧾 Bill of Materials (BOM) & Est. Cost", audit.bill_of_materials || "Not listed");
+      addField(target, "🔋 Power & Current Requirements", audit.power_requirements || "Standard USB 5V");
+      if (audit.lazy_troubleshooting) {
+        addField(target, "🦥 Lazy Troubleshooting Checklist", audit.lazy_troubleshooting);
+      }
+    }
+
+    // Tabs
+    document.querySelectorAll("[data-tab]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("[data-tab]").forEach(t => t.classList.toggle("active", t === btn));
+        document.querySelectorAll(".tab-panel").forEach(p => p.classList.toggle("hidden", p.id !== btn.dataset.tab));
+      });
+    });
+
+    // Copy buttons
+    document.querySelectorAll("[data-copy]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const el = document.getElementById(btn.dataset.copy);
+        await navigator.clipboard.writeText(el.innerText || el.textContent || "");
+        const prev = btn.textContent;
+        btn.textContent = "Copied!";
+        setTimeout(() => { btn.textContent = prev; }, 1200);
+      });
+    });
+
+    // Download .ino sketch
+    document.getElementById("downloadInoBtn").addEventListener("click", () => {
+      const blob = new Blob([latestInoCode], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "lazylock_sketch.ino";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // Hands-Free Voice Playback (ElevenLabs + Browser SpeechSynthesis fallback)
+    document.getElementById("speakBtn").addEventListener("click", () => {
+      if (!elevenAudioPlayer.classList.contains("hidden") && elevenAudioPlayer.src) {
+        elevenAudioPlayer.play();
+        return;
+      }
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(latestVoiceScript);
+        utterance.rate = 0.98;
+        window.speechSynthesis.speak(utterance);
+      }
+    });
+
+    document.getElementById("stopSpeakBtn").addEventListener("click", () => {
+      elevenAudioPlayer.pause();
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    });
+
+    async function refreshLogs() {
+      try {
+        const res = await fetch("/api/logs");
+        const data = await res.json();
+        if (data.logs && data.logs.length) {
+          document.getElementById("logsOutput").textContent = data.logs.join("\n");
+        }
+      } catch (e) {}
+    }
+
+    document.getElementById("refreshLogsBtn").addEventListener("click", refreshLogs);
+
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      messageEl.classList.add("hidden");
+      submitBtn.disabled = true;
+      submitBtn.textContent = "3 Agents Designing Circuit & Code...";
+      statusEl.textContent = "Running Hardware Pipeline…";
+
+      const payload = {
+        idea: document.getElementById("projectIdea").value.trim(),
+        board_type: document.getElementById("boardType").value
+      };
+
+      try {
+        const res = await fetch("/api/build-hardware", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.detail || "Pipeline error");
+
+        const data = body.data;
+        document.getElementById("schematicOutput").innerHTML = renderMarkdown(data.schematic);
+        await renderMermaidIfPresent(data.schematic || "");
+
+        showAudit(data.safety_audit);
+        document.getElementById("firmwareOutput").innerHTML = renderMarkdown(data.firmware);
+
+        latestInoCode = data.raw_ino_code || data.firmware || "";
+        latestVoiceScript = data.voice_script || "Circuit ready.";
+        voiceScriptPreview.textContent = `"${latestVoiceScript}"`;
+
+        if (data.has_audio) {
+          elevenAudioPlayer.src = "/api/audio-stream?t=" + Date.now();
+          elevenAudioPlayer.classList.remove("hidden");
+        } else {
+          elevenAudioPlayer.classList.add("hidden");
+        }
+
+        if (data.logs && data.logs.length) {
+          document.getElementById("logsOutput").textContent = data.logs.join("\n");
+        }
+
+        statusEl.textContent = "Hardware Ready";
+        setMessage(`Circuit schematic, voltage audit, and .ino firmware generated for ${payload.board_type}!`);
+        document.querySelector('[data-tab="schematicTab"]').click();
+      } catch (err) {
+        statusEl.textContent = "Failed";
+        setMessage("Error: " + err.message, true);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Auto-Design Circuit & Firmware ⚡";
+      }
+    });
+  </script>
+</body>
+</html>
