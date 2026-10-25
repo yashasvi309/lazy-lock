@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>LazyLock | 3-Agent AI Hardware & Schematic Studio</title>
+  <title>LazyLock | Gemma 4 Multimodal Hardware Studio & Live Sync</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,8 +17,8 @@
   <style>
     :root {
       --bg-base: #040908;
-      --panel-bg: rgba(10, 22, 19, 0.78);
-      --panel-border: rgba(16, 185, 129, 0.18);
+      --panel-bg: rgba(10, 22, 19, 0.82);
+      --panel-border: rgba(16, 185, 129, 0.2);
     }
 
     body {
@@ -26,8 +26,8 @@
       background-color: var(--bg-base);
       background-image:
         radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.15) 0px, transparent 50%),
-        radial-gradient(at 100% 0%, rgba(6, 182, 212, 0.10) 0px, transparent 50%),
-        radial-gradient(at 50% 100%, rgba(245, 158, 11, 0.07) 0px, transparent 50%);
+        radial-gradient(at 100% 0%, rgba(6, 182, 212, 0.12) 0px, transparent 50%),
+        radial-gradient(at 50% 100%, rgba(245, 158, 11, 0.08) 0px, transparent 50%);
       background-attachment: fixed;
       color: #f1f5f9;
       -webkit-font-smoothing: antialiased;
@@ -190,7 +190,7 @@
 
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-7">
 
-    <!-- HEADER -->
+    <!-- HEADER / NAVBAR -->
     <header class="panel rounded-2xl px-6 py-4 flex flex-wrap items-center justify-between gap-4 mb-7">
       <div class="flex items-center gap-4">
         <div class="w-12 h-12 rounded-2xl bg-slate-950 border border-emerald-500/30 text-emerald-400 font-extrabold text-2xl flex items-center justify-center shadow-lg">
@@ -199,74 +199,100 @@
         <div>
           <div class="flex flex-wrap items-center gap-2.5">
             <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-white">
-              LazyLock <span class="text-emerald-400 font-mono text-sm">v2.0</span>
+              LazyLock <span class="text-emerald-400 font-mono text-sm">Gemma 4</span>
             </h1>
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">
-              Slow &amp; Steady · 3-Agent Hardware + Telegram + Voice Studio
+            <span id="engineBadge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">
+              Cloud · Google Cloud Gemma 4 API
+            </span>
+            <span id="syncIndicator" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span> Telegram Sync Active
             </span>
           </div>
           <p class="muted text-xs sm:text-sm mt-0.5">
-            Too lazy to read 80-page datasheets? Describe any gadget to auto-generate schematics, voltage safety audits, `.ino` firmware &amp; hands-free voice wiring guides.
+            Multimodal 4-Agent Studio: Send Text, Photos, Voice Notes, or PDF Datasheets via Telegram or Web!
           </p>
         </div>
       </div>
 
       <div class="flex items-center gap-3">
+        <!-- Engine Switcher Buttons -->
+        <div class="flex bg-slate-950/90 border border-slate-800 rounded-xl p-1 gap-1">
+          <button id="modeGoogleBtn" type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+            Google Cloud
+          </button>
+          <button id="modeOllamaBtn" type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white">
+            Local Ollama
+          </button>
+        </div>
+
         <div class="flex items-center gap-2 bg-slate-950/80 border border-slate-800 rounded-full px-4 py-2">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" id="statusDot"></span>
           <span id="status" class="text-xs sm:text-sm font-medium text-slate-300">Ready</span>
         </div>
       </div>
     </header>
 
-    <div class="grid grid-cols-1 lg:grid-cols-[380px_minmax(0,1fr)] gap-6 lg:gap-8 items-start">
+    <div class="grid grid-cols-1 lg:grid-cols-[400px_minmax(0,1fr)] gap-6 lg:gap-8 items-start">
 
-      <!-- LEFT CONTROL PANEL -->
-      <aside class="panel rounded-2xl p-6 lg:sticky lg:top-6">
-        <div class="flex items-center justify-between mb-1">
-          <h2 class="text-lg font-bold text-white">Sloth Hardware Prompt</h2>
-          <span class="text-[11px] font-mono uppercase text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-            Zero Datasheets
-          </span>
+      <!-- LEFT CONTROL & INPUT PANEL -->
+      <aside class="panel rounded-2xl p-6 lg:sticky lg:top-6 space-y-5">
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <h2 class="text-lg font-bold text-white">Multimodal Studio Input</h2>
+            <span class="text-[11px] font-mono uppercase text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+              Agent 0 Active
+            </span>
+          </div>
+          <p class="muted text-xs leading-relaxed">
+            Test hardware builds manually from the web or control everything remotely via Telegram (`@LazyLockBot`).
+          </p>
         </div>
-        <p class="muted text-xs leading-relaxed mb-4">
-          Pick a microcontroller and describe what you want to build—or click a 1-click lazy preset below.
-        </p>
 
-        <form id="hardwareForm" class="space-y-4">
+        <form id="multimodalForm" class="space-y-4">
           <div>
             <label for="boardType" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
-              🎛️ Target Microcontroller Board
+              📌 Target Microcontroller Board
             </label>
             <select id="boardType" class="studio-input w-full rounded-xl p-3 text-sm font-medium">
               <option value="ESP32 DevKit V1 (Wi-Fi + BLE)">ESP32 DevKit V1 (Wi-Fi + BLE)</option>
               <option value="Arduino Uno R3 (ATmega328P)">Arduino Uno R3 (5V Logic)</option>
-              <option value="M5Stack Core / Tab5 IoT">M5Stack Core / IoT Kit</option>
-              <option value="Raspberry Pi Pico W (RP2040)">Raspberry Pi Pico W</option>
+              <option value="Raspberry Pi Pico W (RP2040)">Raspberry Pi Pico W (RP2040)</option>
+              <option value="M5Stack Core / IoT Kit">M5Stack Core / IoT Kit</option>
             </select>
           </div>
 
           <div>
             <label for="projectIdea" class="block text-xs font-semibold uppercase tracking-wider text-emerald-300 mb-1.5">
-              ⚡ What Are You Too Lazy to Wire Manually?
+              ✍️ Project Idea / File Caption
             </label>
             <textarea
               id="projectIdea"
-              required
-              rows="4"
+              rows="3"
               class="studio-input w-full rounded-xl p-3 text-sm leading-relaxed"
-              placeholder="e.g., RFID + Servo smart dorm door lock that unlocks via Telegram and buzzes on wrong card..."
-            >Smart dorm door lock using an RC522 RFID reader, SG90 servo motor, status LED, and active buzzer so I can unlock my door from my bed without getting up.</textarea>
+              placeholder="e.g., RFID + Servo smart door lock or describe attached photo/PDF..."
+            >Build an automated plant waterer with a capacitive moisture sensor and 5V relay pump.</textarea>
 
-            <div class="mt-2.5">
-              <span class="block text-[11px] font-mono uppercase text-slate-400 mb-1.5">1-Click Lazy Presets:</span>
+            <div class="mt-2">
+              <span class="block text-[11px] font-mono uppercase text-slate-400 mb-1">Quick Presets:</span>
               <div class="flex flex-wrap gap-1.5">
-                <button type="button" class="preset-chip" data-idea="Smart dorm door lock using RC522 RFID reader, SG90 servo motor, and buzzer so I never have to get out of bed to unlock the door.">🔐 Lazy Door Lock</button>
-                <button type="button" class="preset-chip" data-idea="Automated houseplant soil moisture sensor with capacitive probe, 5V relay water pump, and status LED so my plants water themselves.">🌱 Auto Plant Waterer</button>
-                <button type="button" class="preset-chip" data-idea="HC-SR04 ultrasonic desk presence detector with WS2812B NeoPixel strip and relay that turns off my lights when I fall asleep on the couch.">🛋️ Couch Sleep Sensor</button>
-                <button type="button" class="preset-chip" data-idea="SSD1306 I2C OLED display + DHT22 temperature/humidity monitor with high-temp fan relay trigger.">🌡️ OLED Room Monitor</button>
+                <button type="button" class="preset-chip" data-idea="Smart door lock using RC522 RFID reader, SG90 servo motor, and buzzer.">🚪 RFID Smart Lock</button>
+                <button type="button" class="preset-chip" data-idea="Soil moisture sensor + 5V relay water pump automation.">🌱 Plant Waterer</button>
+                <button type="button" class="preset-chip" data-idea="HC-SR04 ultrasonic presence detector with NeoPixel status strip.">📏 Ultrasonic Alarm</button>
               </div>
             </div>
+          </div>
+
+          <!-- File Upload for Photos or PDFs -->
+          <div>
+            <label for="mediaFile" class="block text-xs font-semibold uppercase tracking-wider text-cyan-300 mb-1.5">
+              📎 Optional Attachment (Photo 📷 or PDF 📄)
+            </label>
+            <input
+              type="file"
+              id="mediaFile"
+              accept="image/*,application/pdf,audio/*"
+              class="studio-input w-full rounded-xl p-2.5 text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-emerald-500/20 file:text-emerald-300 hover:file:bg-emerald-500/30 cursor-pointer"
+            >
           </div>
 
           <button
@@ -274,28 +300,20 @@
             type="submit"
             class="btn-primary w-full rounded-xl text-white font-bold py-3.5 px-4 text-sm tracking-wide disabled:opacity-50"
           >
-            Auto-Design Circuit &amp; Firmware ⚡
+            🚀 Run Gemma 4 4-Agent Pipeline
           </button>
         </form>
 
         <!-- HANDS-FREE VOICE WIRING COACH BAR -->
-        <div class="mt-6 pt-5 border-t border-slate-800/80">
+        <div class="pt-4 border-t border-slate-800/80">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-bold uppercase tracking-wider text-cyan-300">🎙️ Hands-Free Voice Wiring Coach</span>
-            <span id="voiceBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">ElevenLabs + WebTTS</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-cyan-300">🎧 Hands-Free Voice Wiring Briefing</span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">Auto MP3</span>
           </div>
           <p id="voiceScriptPreview" class="text-xs muted italic mb-3">
-            Generate a circuit to listen to step-by-step breadboard wiring instructions while keeping your hands on your jumper wires.
+            Generate a hardware build to listen to step-by-step breadboard wiring instructions.
           </p>
-          <audio id="elevenAudioPlayer" controls class="w-full h-9 hidden mb-2"></audio>
-          <div class="flex gap-2">
-            <button id="speakBtn" type="button" class="action-btn flex-1 rounded-xl py-2 px-3 text-xs">
-              🔊 Speak Wiring Guide Out Loud
-            </button>
-            <button id="stopSpeakBtn" type="button" class="action-btn rounded-xl py-2 px-3 text-xs">
-              ⏹️
-            </button>
-          </div>
+          <audio id="audioPlayer" controls class="w-full h-9 hidden mb-2"></audio>
         </div>
       </aside>
 
@@ -305,16 +323,16 @@
         <!-- TABS -->
         <div class="panel p-1.5 rounded-2xl inline-flex flex-wrap gap-1.5 w-full sm:w-auto" role="tablist">
           <button class="tab-btn active rounded-xl px-4 py-2.5 text-xs sm:text-sm" data-tab="schematicTab" type="button">
-            01 · Pinout &amp; Visual Schematic
+            01 · Pinout &amp; Mermaid Schematic
           </button>
           <button class="tab-btn rounded-xl px-4 py-2.5 text-xs sm:text-sm" data-tab="auditTab" type="button">
-            02 · Magic-Smoke Safety &amp; BOM Audit
+            02 · Safety &amp; BOM Audit (JSON)
           </button>
           <button class="tab-btn rounded-xl px-4 py-2.5 text-xs sm:text-sm" data-tab="firmwareTab" type="button">
-            03 · Ready-to-Flash Firmware (.ino)
+            03 · Firmware (.ino) &amp; Voice Guide
           </button>
           <button class="tab-btn rounded-xl px-4 py-2.5 text-xs sm:text-sm" data-tab="logsTab" type="button">
-            04 · Live AI Observability Logs
+            04 · Live Terminal &amp; Sync Logs
           </button>
         </div>
 
@@ -322,22 +340,28 @@
         <section id="schematicTab" class="tab-panel panel rounded-2xl p-5 sm:p-7">
           <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-5 border-b border-slate-800/80">
             <div>
-              <span class="text-[11px] font-mono uppercase tracking-widest text-emerald-400 block">Agent 01 · Schematic &amp; Pinout Architect</span>
-              <h2 class="text-xl font-bold text-white">🔌 Interactive Block Schematic &amp; Pin-to-Pin Map</h2>
+              <span id="sourceIndicator" class="text-[11px] font-mono uppercase tracking-widest text-emerald-400 block">Agent 01 · Schematic &amp; Pinout Architect</span>
+              <h2 class="text-xl font-bold text-white">📐 Interactive Block Schematic &amp; Pin-to-Pin Map</h2>
             </div>
             <button class="action-btn rounded-xl px-4 py-2 text-xs sm:text-sm" data-copy="schematicOutput" type="button">
               Copy Pinout
             </button>
           </div>
 
+          <!-- Multimodal Intake Summary Banner (If photo/PDF/voice was sent) -->
+          <div id="intakeBanner" class="hidden mb-4 rounded-xl bg-cyan-950/40 border border-cyan-500/30 p-4">
+            <div class="text-[11px] font-mono uppercase tracking-wider text-cyan-400 mb-1">🔍 Agent 0 Multimodal Intake Analysis</div>
+            <p id="intakeText" class="text-xs text-slate-200 leading-relaxed"></p>
+          </div>
+
           <!-- Mermaid Visual Circuit Container -->
           <div id="mermaidBox" class="hidden mb-5 rounded-xl bg-slate-950/90 border border-emerald-500/30 p-4 overflow-x-auto">
-            <div class="text-[11px] font-mono uppercase tracking-wider text-emerald-400 mb-2">📐 Auto-Rendered Hardware Block Topology</div>
+            <div class="text-[11px] font-mono uppercase tracking-wider text-emerald-400 mb-2">⚡ Auto-Rendered Hardware Block Topology</div>
             <div id="mermaidRender" class="flex justify-center"></div>
           </div>
 
           <div id="schematicOutput" class="markdown rounded-xl bg-slate-950/75 border border-slate-800/90 p-5 sm:p-6 min-h-[320px]">
-            <p class="muted">Click <strong>Auto-Design Circuit &amp; Firmware ⚡</strong> to generate your Mermaid circuit topology and pin-to-pin wiring table.</p>
+            <p class="muted">Send a prompt via Telegram or click <strong>Run Gemma 4 4-Agent Pipeline</strong> to generate your hardware specifications.</p>
           </div>
         </section>
 
@@ -345,17 +369,17 @@
         <section id="auditTab" class="tab-panel panel rounded-2xl p-5 sm:p-7 hidden">
           <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-5 border-b border-slate-800/80">
             <div>
-              <span class="text-[11px] font-mono uppercase tracking-widest text-amber-400 block">Agent 02 · Electrical Safety &amp; BOM Auditor (JSON)</span>
+              <span class="text-[11px] font-mono uppercase tracking-widest text-amber-400 block">Agent 02 · Electrical Safety &amp; BOM Auditor</span>
               <h2 class="text-xl font-bold text-white">🛡️ Voltage Rail Verification &amp; Bill of Materials</h2>
             </div>
             <button class="action-btn rounded-xl px-4 py-2 text-xs sm:text-sm" data-copy="auditOutput" type="button">
-              Copy BOM &amp; Audit
+              Copy Audit JSON
             </button>
           </div>
 
           <div id="auditOutput" class="grid gap-4 min-h-[320px]">
             <div class="rounded-xl bg-slate-950/75 border border-slate-800/90 p-5 flex items-center">
-              <p class="muted">3.3V/5V logic conflict checks, current draw estimates, and itemized component costs will appear here.</p>
+              <p class="muted">3.3V/5V logic conflict checks and itemized BOM will appear here.</p>
             </div>
           </div>
         </section>
@@ -369,7 +393,7 @@
             </div>
             <div class="flex flex-wrap gap-2">
               <button id="downloadInoBtn" class="action-btn rounded-xl px-4 py-2 text-xs sm:text-sm" type="button">
-                ⬇️ Download sketch.ino
+                💾 Download sketch.ino
               </button>
               <button class="action-btn rounded-xl px-4 py-2 text-xs sm:text-sm" data-copy="firmwareOutput" type="button">
                 Copy Code
@@ -378,7 +402,7 @@
           </div>
 
           <div id="firmwareOutput" class="markdown rounded-xl bg-slate-950/75 border border-slate-800/90 p-5 sm:p-6 min-h-[320px]">
-            <p class="muted">Complete Arduino / ESP32 C++ code and the hands-free voice wiring script will appear here.</p>
+            <p class="muted">Complete C++ firmware code generated by Gemma 4 Agent 3 will appear here.</p>
           </div>
         </section>
 
@@ -386,14 +410,14 @@
         <section id="logsTab" class="tab-panel panel rounded-2xl p-5 sm:p-7 hidden">
           <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-800/80">
             <div>
-              <span class="text-[11px] font-mono uppercase tracking-widest text-emerald-400 block">Real-Time Telemetry · LazyLockAI Logger</span>
-              <h2 class="text-xl font-bold text-white">📟 Structured AI Pipeline Observability</h2>
+              <span class="text-[11px] font-mono uppercase tracking-widest text-emerald-400 block">Real-Time Telemetry · Telegram &amp; Web Sync</span>
+              <h2 class="text-xl font-bold text-white">📊 Structured AI Pipeline Observability Logs</h2>
             </div>
             <button id="refreshLogsBtn" class="action-btn rounded-xl px-4 py-2 text-xs sm:text-sm" type="button">
               🔄 Refresh Logs
             </button>
           </div>
-          <pre id="logsOutput" class="rounded-xl bg-black/90 border border-emerald-500/25 p-4 font-mono text-xs text-emerald-300 overflow-x-auto min-h-[320px] leading-relaxed">Waiting for pipeline execution...</pre>
+          <pre id="logsOutput" class="rounded-xl bg-black/90 border border-emerald-500/25 p-4 font-mono text-xs text-emerald-300 overflow-x-auto min-h-[320px] leading-relaxed">Connecting to telemetry stream...</pre>
         </section>
 
         <!-- STATUS BANNER -->
@@ -403,7 +427,7 @@
     </div>
 
     <footer class="text-center muted text-xs mt-12 pt-6 border-t border-slate-800/40">
-      LazyLock (SlothLab) · Open-Source 3-Agent AI Hardware Engineer · Powered by Google Gemini / Gemma, ElevenLabs, Telegram &amp; FastAPI
+      LazyLock AI · Open-Source 4-Agent Gemma 4 Multimodal Hardware Studio · Powered by Google AI Studio, Ollama, Telegram &amp; FastAPI
     </footer>
   </div>
 
@@ -412,15 +436,19 @@
       mermaid.initialize({ startOnLoad: false, theme: "dark" });
     }
 
-    const form = document.getElementById("hardwareForm");
+    const form = document.getElementById("multimodalForm");
     const submitBtn = document.getElementById("submitBtn");
     const statusEl = document.getElementById("status");
+    const statusDot = document.getElementById("statusDot");
     const messageEl = document.getElementById("message");
     const voiceScriptPreview = document.getElementById("voiceScriptPreview");
-    const elevenAudioPlayer = document.getElementById("elevenAudioPlayer");
+    const audioPlayer = document.getElementById("audioPlayer");
+    const engineBadge = document.getElementById("engineBadge");
+    const modeGoogleBtn = document.getElementById("modeGoogleBtn");
+    const modeOllamaBtn = document.getElementById("modeOllamaBtn");
 
-    let latestInoCode = "// Generate a hardware project first";
-    let latestVoiceScript = "Generate a hardware project first to hear your wiring guide.";
+    let latestInoCode = "// Generate a hardware build first";
+    let lastRenderedTimestamp = 0;
 
     // Preset chips
     document.querySelectorAll("[data-idea]").forEach(chip => {
@@ -439,10 +467,6 @@
       return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
-    function fallbackMarkdown(md) {
-      return "<pre>" + escapeHtml(md) + "</pre>";
-    }
-
     function renderMarkdown(value) {
       const source = typeof value === "string" ? value : JSON.stringify(value ?? "", null, 2);
       try {
@@ -451,7 +475,7 @@
           return typeof window.DOMPurify !== "undefined" ? window.DOMPurify.sanitize(raw) : raw;
         }
       } catch (e) {}
-      return fallbackMarkdown(source);
+      return "<pre>" + escapeHtml(source) + "</pre>";
     }
 
     async function renderMermaidIfPresent(markdownText) {
@@ -466,7 +490,7 @@
           container.innerHTML = svg;
           return;
         } catch (err) {
-          console.warn("Mermaid diagram fallback:", err);
+          console.warn("Mermaid fallback:", err);
         }
       }
       box.classList.add("hidden");
@@ -492,13 +516,42 @@
         addField(target, "Status", "No audit returned.");
         return;
       }
-      addField(target, "✅ Safety Verdict", audit.safety_verdict || "Verified");
-      addField(target, "⚡ Voltage & Logic Level Warnings", audit.voltage_warnings || "None");
-      addField(target, "🧾 Bill of Materials (BOM) & Est. Cost", audit.bill_of_materials || "Not listed");
-      addField(target, "🔋 Power & Current Requirements", audit.power_requirements || "Standard USB 5V");
+      addField(target, "🛡️ Safety Verdict", audit.safety_verdict || "Verified");
+      addField(target, "⚡ Voltage & Logic Warnings", audit.voltage_warnings || "None");
+      addField(target, "🧰 Bill of Materials (BOM)", audit.bill_of_materials || "Not listed");
+      addField(target, "🔋 Power Requirements", audit.power_requirements || "Standard 5V USB");
       if (audit.lazy_troubleshooting) {
-        addField(target, "🦥 Lazy Troubleshooting Checklist", audit.lazy_troubleshooting);
+        addField(target, "🔧 Troubleshooting Checklist", audit.lazy_troubleshooting);
       }
+    }
+
+    function populateUI(data) {
+      document.getElementById("schematicOutput").innerHTML = renderMarkdown(data.schematic);
+      renderMermaidIfPresent(data.schematic || "");
+      showAudit(data.safety_audit);
+      document.getElementById("firmwareOutput").innerHTML = renderMarkdown(data.firmware);
+
+      latestInoCode = data.raw_ino_code || data.firmware || "";
+      const voiceScript = data.voice_script || "Circuit ready.";
+      voiceScriptPreview.textContent = `"${voiceScript}"`;
+
+      const intakeBanner = document.getElementById("intakeBanner");
+      const intakeText = document.getElementById("intakeText");
+      if (data.media_summary) {
+        intakeText.textContent = data.media_summary;
+        intakeBanner.classList.remove("hidden");
+      } else {
+        intakeBanner.classList.add("hidden");
+      }
+
+      if (data.has_audio) {
+        audioPlayer.src = "/api/audio-stream?t=" + Date.now();
+        audioPlayer.classList.remove("hidden");
+      } else {
+        audioPlayer.classList.add("hidden");
+      }
+
+      document.getElementById("sourceIndicator").textContent = `Source: ${data.source.toUpperCase()} · Modality: ${data.modality}`;
     }
 
     // Tabs
@@ -526,96 +579,129 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "lazylock_sketch.ino";
+      a.download = "lazylock_prototype.ino";
       a.click();
       URL.revokeObjectURL(url);
     });
 
-    // Hands-Free Voice Playback (ElevenLabs + Browser SpeechSynthesis fallback)
-    document.getElementById("speakBtn").addEventListener("click", () => {
-      if (!elevenAudioPlayer.classList.contains("hidden") && elevenAudioPlayer.src) {
-        elevenAudioPlayer.play();
-        return;
-      }
-      if ("speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(latestVoiceScript);
-        utterance.rate = 0.98;
-        window.speechSynthesis.speak(utterance);
-      }
-    });
-
-    document.getElementById("stopSpeakBtn").addEventListener("click", () => {
-      elevenAudioPlayer.pause();
-      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-    });
-
-    async function refreshLogs() {
+    // Engine Mode Switcher
+    async function switchEngine(provider) {
       try {
-        const res = await fetch("/api/logs");
-        const data = await res.json();
-        if (data.logs && data.logs.length) {
-          document.getElementById("logsOutput").textContent = data.logs.join("\n");
+        const res = await fetch("/api/switch-mode", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ provider })
+        });
+        const body = await res.json();
+        if (res.ok) {
+          updateEngineUI(provider);
+          setMessage("Engine switched to " + provider.toUpperCase());
+        }
+      } catch (e) {
+        console.error("Engine switch error:", e);
+      }
+    }
+
+    function updateEngineUI(provider) {
+      if (provider === "google") {
+        modeGoogleBtn.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
+        modeOllamaBtn.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white";
+        engineBadge.className = "inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/25";
+        engineBadge.textContent = "Cloud · Google Cloud Gemma 4 API";
+      } else {
+        modeOllamaBtn.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-amber-500/20 text-amber-300 border border-amber-500/40";
+        modeGoogleBtn.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white";
+        engineBadge.className = "inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/25";
+        engineBadge.textContent = "Edge · Local Open-Source Ollama";
+      }
+    }
+
+    modeGoogleBtn.addEventListener("click", () => switchEngine("google"));
+    modeOllamaBtn.addEventListener("click", () => switchEngine("ollama"));
+
+    // Background Polling for Status, Logs, and Telegram Auto-Sync
+    async function pollDashboard() {
+      try {
+        const statRes = await fetch("/api/status");
+        const statData = await statRes.json();
+        if (statData.status) {
+          statusEl.textContent = statData.status.current_stage;
+          if (statData.status.is_running) {
+            statusDot.className = "w-2 h-2 rounded-full bg-amber-400 animate-ping";
+          } else {
+            statusDot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+          }
+          updateEngineUI(statData.status.provider);
+        }
+        if (statData.logs && statData.logs.length) {
+          document.getElementById("logsOutput").textContent = statData.logs.join("\n");
+        }
+
+        const res = await fetch("/api/latest-result");
+        const body = await res.json();
+        if (body.has_result && body.timestamp > lastRenderedTimestamp) {
+          lastRenderedTimestamp = body.timestamp;
+          populateUI(body.data);
+          setMessage(`Synced build from [${body.data.source.toUpperCase()}] (${body.data.user_idea})`);
         }
       } catch (e) {}
     }
 
-    document.getElementById("refreshLogsBtn").addEventListener("click", refreshLogs);
+    setInterval(pollDashboard, 2000);
+    pollDashboard();
 
+    document.getElementById("refreshLogsBtn").addEventListener("click", pollDashboard);
+
+    // Manual Form Submission with Optional File Attachment
     form.addEventListener("submit", async e => {
       e.preventDefault();
       messageEl.classList.add("hidden");
       submitBtn.disabled = true;
-      submitBtn.textContent = "3 Agents Designing Circuit & Code...";
-      statusEl.textContent = "Running Hardware Pipeline…";
+      submitBtn.textContent = "Gemma 4 Agents Processing...";
+      statusEl.textContent = "Running Pipeline…";
 
-      const payload = {
-        idea: document.getElementById("projectIdea").value.trim(),
-        board_type: document.getElementById("boardType").value
-      };
+      const idea = document.getElementById("projectIdea").value.trim();
+      const boardType = document.getElementById("boardType").value;
+      const fileInput = document.getElementById("mediaFile");
 
       try {
-        const res = await fetch("/api/build-hardware", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        const body = await res.json();
+        let res, body;
+        if (fileInput.files && fileInput.files[0]) {
+          const formData = new FormData();
+          formData.append("idea", idea);
+          formData.append("board_type", boardType);
+          formData.append("media", fileInput.files[0]);
+
+          res = await fetch("/api/build-hardware-multimodal", {
+            method: "POST",
+            body: formData
+          });
+        } else {
+          res = await fetch("/api/build-hardware", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ idea, board_type: boardType })
+          });
+        }
+
+        body = await res.json();
         if (!res.ok) throw new Error(body.detail || "Pipeline error");
 
-        const data = body.data;
-        document.getElementById("schematicOutput").innerHTML = renderMarkdown(data.schematic);
-        await renderMermaidIfPresent(data.schematic || "");
-
-        showAudit(data.safety_audit);
-        document.getElementById("firmwareOutput").innerHTML = renderMarkdown(data.firmware);
-
-        latestInoCode = data.raw_ino_code || data.firmware || "";
-        latestVoiceScript = data.voice_script || "Circuit ready.";
-        voiceScriptPreview.textContent = `"${latestVoiceScript}"`;
-
-        if (data.has_audio) {
-          elevenAudioPlayer.src = "/api/audio-stream?t=" + Date.now();
-          elevenAudioPlayer.classList.remove("hidden");
-        } else {
-          elevenAudioPlayer.classList.add("hidden");
-        }
-
-        if (data.logs && data.logs.length) {
-          document.getElementById("logsOutput").textContent = data.logs.join("\n");
-        }
-
+        lastRenderedTimestamp = Date.now();
+        populateUI(body.data);
         statusEl.textContent = "Hardware Ready";
-        setMessage(`Circuit schematic, voltage audit, and .ino firmware generated for ${payload.board_type}!`);
+        setMessage(`Success! Schematic, BOM, and firmware generated.`);
         document.querySelector('[data-tab="schematicTab"]').click();
       } catch (err) {
         statusEl.textContent = "Failed";
         setMessage("Error: " + err.message, true);
       } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = "Auto-Design Circuit & Firmware ⚡";
+        submitBtn.textContent = "🚀 Run Gemma 4 4-Agent Pipeline";
       }
     });
   </script>
 </body>
 </html>
+
+
